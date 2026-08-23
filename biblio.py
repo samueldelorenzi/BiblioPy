@@ -60,8 +60,15 @@ def adicionarLivro():
     print("\n--- Adicionar Livro ---")
     titulo = input("Digite o título do livro: ")
     autor = input("Digite o autor do livro: ")
-    ano = input("Digite o ano de lançamento do livro: ")
     
+    while True:
+        try:
+            ano = input("Digite o ano de lançamento do livro: ")
+            ano = int(ano)
+            break
+        except ValueError:
+            print("Erro: O ano deve ser um número inteiro. Tente novamente.")
+            
     codigo = 1
     if livros:
         codigo = max(livro["codigo"] for livro in livros) + 1
@@ -70,7 +77,7 @@ def adicionarLivro():
         "codigo": codigo,
         "titulo": titulo, 
         "autor": autor, 
-        "ano": ano,
+        "ano": str(ano),
         "status": StatusLivro.DISPONIVEL.value
     })
     salvar_livros()
@@ -78,9 +85,9 @@ def adicionarLivro():
 
 def removerLivro():
     print("\n--- Remover Livro ---")
-    titulo = input("Digite o título do livro que deseja remover: ")
+    titulo = input("Digite o título ou o código do livro que deseja remover: ")
     for livro in livros:
-        if livro["titulo"].lower() == titulo.lower():
+        if livro["titulo"].lower() == titulo.lower() or str(livro["codigo"]) == titulo:
             livros.remove(livro)
             salvar_livros()
             print("\nLivro removido com sucesso!")
@@ -89,10 +96,10 @@ def removerLivro():
 
 def buscarLivro():
     print("\n--- Buscar Livro ---")
-    titulo = input("Digite o título do livro que deseja buscar: ")
-    encontrados = [livro for livro in livros if livro["titulo"].lower() == titulo.lower()]
+    titulo = input("Digite o título ou o código do livro que deseja buscar: ")
+    encontrados = [livro for livro in livros if titulo.lower() in livro["titulo"].lower() or str(livro["codigo"]) == titulo]
     if encontrados:
-        print("\nLivro encontrado:")
+        print("\nLivro(s) encontrado(s):")
         exibirTabela(encontrados)
     else:
         print("\nLivro não encontrado!")
@@ -100,6 +107,34 @@ def buscarLivro():
 def listarLivros():
     print("\n--- Lista de Livros Cadastrados ---")
     exibirTabela(livros)
+
+def emprestarLivro():
+    print("\n--- Emprestar Livro ---")
+    titulo = input("Digite o título ou o código do livro para emprestar: ")
+    for livro in livros:
+        if titulo.lower() in livro["titulo"].lower() or str(livro["codigo"]) == titulo:
+            if livro["status"] == StatusLivro.EMPRESTADO.value:
+                print(f"\nO livro {livro['titulo']} já está emprestado")
+            else:
+                livro["status"] = StatusLivro.EMPRESTADO.value
+                salvar_livros()
+                print(f"\nLivro {livro['titulo']} emprestado com sucesso")
+            return
+    print("\nLivro não encontrado!")
+
+def devolverLivro():
+    print("\n--- Devolver Livro ---")
+    titulo = input("Digite o título ou o código do livro para devolver: ")
+    for livro in livros:
+        if titulo.lower() in livro["titulo"].lower() or str(livro["codigo"]) == titulo:
+            if livro["status"] == StatusLivro.DISPONIVEL.value:
+                print(f"\nO livro {livro['titulo']} não está emprestado")
+            else:
+                livro["status"] = StatusLivro.DISPONIVEL.value
+                salvar_livros()
+                print(f"\nLivro {livro['titulo']} devolvido com sucesso")
+            return
+    print("\nLivro não encontrado!")
 
 livros = carregar_livros()
 
@@ -113,7 +148,9 @@ while True:
     print("2. Remover livro")
     print("3. Buscar livro")    
     print("4. Listar livros")
-    print("5. Sair")
+    print("5. Emprestar livro")
+    print("6. Devolver livro")
+    print("7. Sair")
 
     escolha = input("\nDigite o número da opção desejada: ")
 
@@ -126,6 +163,10 @@ while True:
     elif escolha == "4":
         listarLivros()
     elif escolha == "5":
+        emprestarLivro()
+    elif escolha == "6":
+        devolverLivro()
+    elif escolha == "7":
         print("\nObrigado por usar o BiblioPy. Até logo!")
         break
     else:
