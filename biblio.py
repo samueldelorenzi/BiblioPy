@@ -1,6 +1,11 @@
 # Aplicativo de gerência de biblioteca comunitária
 # Desenvolvedor: Samuel De Lorenzi Ribeiro
 import os
+from enum import IntEnum
+
+class StatusLivro(IntEnum):
+    DISPONIVEL = 1
+    EMPRESTADO = 2
 
 def carregar_livros():
     livros = []
@@ -10,36 +15,44 @@ def carregar_livros():
                 linha = linha.strip()
                 if linha:
                     partes = linha.split(";")
-                    if len(partes) >= 3:
-                        livros.append({
-                            "titulo": partes[0],
-                            "autor": partes[1],
-                            "ano": partes[2]
-                        })
+                    if len(partes) >= 5:
+                        try:
+                            livros.append({
+                                "codigo": int(partes[0]),
+                                "titulo": partes[1],
+                                "autor": partes[2],
+                                "ano": partes[3],
+                                "status": int(partes[4])
+                            })
+                        except ValueError:
+                            pass
     return livros
 
 def salvar_livros():
     with open("livros.csv", "w", encoding="utf-8") as f:
         for livro in livros:
-            f.write(f"{livro['titulo']};{livro['autor']};{livro['ano']}\n")
+            f.write(f"{livro['codigo']};{livro['titulo']};{livro['autor']};{livro['ano']};{livro['status']}\n")
 
 def exibirTabela(lista):
     if not lista:
         print("\nNenhum livro cadastrado!")
         return
 
+    largura_cod = max(max(len(str(l["codigo"])) for l in lista), 6)
     largura_titulo = max(max(len(str(l["titulo"])) for l in lista), 6)
     largura_autor = max(max(len(str(l["autor"])) for l in lista), 5)
     largura_ano = max(max(len(str(l["ano"])) for l in lista), 4)
+    largura_status = 12
 
-    cabecalho = f"| {'Título':<{largura_titulo}} | {'Autor':<{largura_autor}} | {'Ano':<{largura_ano}} |"
-    divisor = f"|{'-' * (largura_titulo + 2)}|{'-' * (largura_autor + 2)}|{'-' * (largura_ano + 2)}|"
+    cabecalho = f"| {'Código':<{largura_cod}} | {'Título':<{largura_titulo}} | {'Autor':<{largura_autor}} | {'Ano':<{largura_ano}} | {'Status':<{largura_status}} |"
+    divisor = f"|{'-' * (largura_cod + 2)}|{'-' * (largura_titulo + 2)}|{'-' * (largura_autor + 2)}|{'-' * (largura_ano + 2)}|{'-' * (largura_status + 2)}|"
 
     print("\n" + divisor)
     print(cabecalho)
     print(divisor)
     for livro in lista:
-        print(f"| {str(livro['titulo']):<{largura_titulo}} | {str(livro['autor']):<{largura_autor}} | {str(livro['ano']):<{largura_ano}} |")
+        status_str = "Disponível" if livro["status"] == StatusLivro.DISPONIVEL.value else "Emprestado"
+        print(f"| {str(livro['codigo']):<{largura_cod}} | {str(livro['titulo']):<{largura_titulo}} | {str(livro['autor']):<{largura_autor}} | {str(livro['ano']):<{largura_ano}} | {status_str:<{largura_status}} |")
         print(divisor)
     print()
 
@@ -48,7 +61,18 @@ def adicionarLivro():
     titulo = input("Digite o título do livro: ")
     autor = input("Digite o autor do livro: ")
     ano = input("Digite o ano de lançamento do livro: ")
-    livros.append({"titulo": titulo, "autor": autor, "ano": ano})
+    
+    codigo = 1
+    if livros:
+        codigo = max(livro["codigo"] for livro in livros) + 1
+        
+    livros.append({
+        "codigo": codigo,
+        "titulo": titulo, 
+        "autor": autor, 
+        "ano": ano,
+        "status": StatusLivro.DISPONIVEL.value
+    })
     salvar_livros()
     print("\nLivro adicionado com sucesso!")
 
